@@ -1,6 +1,6 @@
 # LeaseShield AI
 
-Commercial lease risk review with page-cited findings, tenant counter-clauses, and downloadable reports. AI output is informational and is not legal advice.
+Commercial lease risk review with page-cited findings, tenant counter-clauses, and downloadable reports. Built to help small business tenants and independent brokers spot financial risks and prepare negotiation tools. AI output is informational and is not legal advice.
 
 ## Local setup
 
