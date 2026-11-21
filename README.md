@@ -8,6 +8,16 @@ Requirements: Python 3.11+, Node.js 20+, Tesseract OCR, and Poppler utilities. I
 
 Set `NEXT_PUBLIC_API_URL` to the browser-reachable API URL, `FRONTEND_URL` to the app origin, and `LLM_BASE_URL` if using a compatible non-OpenAI endpoint. Stripe checkout requires Price IDs for the $49 one-time and $99/month recurring products.
 
+## Contributor smoke test
+
+After installing the prerequisites, copying `.env.example` to `.env`, and setting `OPENAI_API_KEY` (or `LLM_API_KEY`), run:
+
+```bash
+./scripts/test_local.sh
+```
+
+The script installs project dependencies, starts the API and frontend, uploads the included synthetic test lease, verifies that a report can be retrieved, and opens the GUI at `http://localhost:3000/upload`. It needs internet access for dependency installation and the LLM request. Press Ctrl+C to stop the local servers.
+
 ## Stripe webhooks
 
 Install and authenticate the Stripe CLI, then run `stripe listen --forward-to localhost:8000/api/payments/webhook`. Copy the CLI-provided `whsec_...` value to `STRIPE_WEBHOOK_SECRET`. Use Stripe test mode and test cards; the webhook unlocks a report only after a verified `checkout.session.completed` event. In production, register `/api/payments/webhook` in Stripe and use that endpoint's signing secret.
