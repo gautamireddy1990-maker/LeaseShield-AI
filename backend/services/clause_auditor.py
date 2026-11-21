@@ -16,7 +16,8 @@ def _get_client() -> AsyncOpenAI:
     if not api_key:
         raise RuntimeError("Set LLM_API_KEY (or OPENAI_API_KEY) to enable lease audits")
     base_url = os.getenv("LLM_BASE_URL")
-    return AsyncOpenAI(api_key=api_key, base_url=base_url)
+    # Bound stalled requests so the upload endpoint can return an actionable error.
+    return AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=150.0, max_retries=1)
 
 
 async def audit_lease_document(pages: list[dict], file_name: str) -> LeaseAuditReport:

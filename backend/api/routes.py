@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 import re
 import tempfile
+import asyncio
+import logging
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -19,6 +21,7 @@ from backend.services.pdf_parser import extract_pages_from_pdf
 from backend.services.report_exporter import generate_audit_pdf
 
 router = APIRouter(prefix="/api")
+logger = logging.getLogger(__name__)
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 UPLOAD_DIR = Path(os.getenv("LEASESHIELD_UPLOAD_DIR", Path(tempfile.gettempdir()) / "leaseshield-uploads"))
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -51,12 +54,18 @@ async def create_audit(file: UploadFile = File(...)) -> LeaseAuditReport:
             raise HTTPException(status_code=400, detail="Uploaded PDF is empty")
 
         pages = extract_pages_from_pdf(str(temp_path))
+        logger.info("Extracted %d pages from upload %s; starting audit", len(pages), filename)
         report = await audit_lease_document(pages, filename)
         REPORTS[report.report_id] = report
+        logger.info("Completed lease audit %s", report.report_id)
         return _preview_report(report)
+    except (asyncio.TimeoutError, TimeoutError) as exc:
+        logger.exception("Lease audit timed out for %s", filename)
+        raise HTTPException(status_code=504, detail="The audit service timed out while generating the report. Check the LLM endpoint and try again.") from exc
     except HTTPException:
         raise
     except Exception as exc:
+        logger.exception("Lease audit failed for %s", filename)
         raise HTTPException(status_code=422, detail=f"Could not process lease PDF: {exc}") from exc
     finally:
         await file.close()
